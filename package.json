@@ -2,7 +2,7 @@
   "name": "prettify-json",
   "displayName": "Prettify JSON",
   "description": "Visual Studio Code Prettify JSON Extension",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "icon": "icon.png",
   "repository": {
     "type": "git",
@@ -13,11 +13,12 @@
     "vscode": "^0.10.1"
   },
   "categories": [
-    "Languages",
-    "JSON"
+	"Programming Languages",
+	"Formatters"
   ],
   "activationEvents": [
-    "onCommand:extension.prettifyJSON"
+    "onCommand:extension.prettifyJSON",
+    "onCommand:extension.prettifyEscapedJSON"
   ],
   "main": "./out/src/extension",
   "contributes": {
@@ -25,7 +26,11 @@
       {
         "command": "extension.prettifyJSON",
         "title": "Prettify JSON"
-      }
+	  },
+	  {
+		  "command": "extension.prettifyEscapedJSON",
+		  "title": "Prettify Escaped JSON"
+	  }
     ]
   },
   "scripts": {

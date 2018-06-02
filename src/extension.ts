@@ -10,52 +10,80 @@ import {
 } from 'vscode';
 
 import * as vscode from 'vscode';
-
-const jsonlint = require('jsonlint');
+import * as jsonlint from 'jsonlint';
 
 const LINE_SEPERATOR = /\n|\r\n/;
 
 // TODO: make this configurable.
-const JSON_SPACE = 4;
+const DEFAULT_JSON_SPACE = 4; 
 
-export function activate(context: ExtensionContext) {
+/**
+ */
+function removeEscapedChars(rawJSON: string) {
+	return rawJSON.replace(/\\n/g, (match, offset, string) => {
+		return '';
+	}).replace(/\\"/g, (match, offset, string) => {
+		return '"';
+	});
+}
 
-  let disposable = commands.registerCommand('extension.prettifyJSON', () => {
-
-    const editor = window.activeTextEditor;
+/**
+ */
+function getActiveEditorContents(): string {
+	const editor = window.activeTextEditor;
 
     if (!editor) {
-      return;
+      throw new Error('could not get active text editor');
     }
 
-    const raw = editor.document.getText();
-    let json = null;
+    return editor.document.getText();
+}
 
-    try {
-      json = jsonlint.parse(stripComments(raw));
-    } catch (jsonLintError) {
-      const message: string = jsonLintError.message;
-      const lineNumber = parseInt(message.substring(message.indexOf('line ') + 5, message.indexOf(':')), 10);
+/**
+ * 
+ * @param editor 
+ * @param contents 
+ */
+function replaceEditorContents(editor, contents: string) {
+	editor.edit(builder => {
+		const start = new Position(0, 0);
+		const lines = contents.split(LINE_SEPERATOR);
+		const end = new Position(lines.length, lines[lines.length - 1].length);
+		const allRange = new Range(start, end);
+		builder.replace(allRange, contents);
+	}).then(success => {
+		// TODO: unselect the text
+	});
+}
 
+export function activate(context: ExtensionContext) {
+  let disposable = commands.registerCommand('extension.prettifyJSON', () => {
 
-      return;
-    }
+	const raw = getActiveEditorContents();
 
-    let pretty = JSON.stringify(json, null, JSON_SPACE);
+    const json = jsonlint.parse(stripComments(raw));
 
-    editor.edit(builder=> {
-      const start = new Position(0, 0);
-      const lines = raw.split(LINE_SEPERATOR);
-      const end = new Position(lines.length, lines[lines.length - 1].length);
-      const allRange = new Range(start, end);
-      builder.replace(allRange, pretty);
-    }).then(success=> {
+    const pretty = JSON.stringify(json, null, DEFAULT_JSON_SPACE);
 
-      // TODO: unselect the text
-
-    });
+	replaceEditorContents(window.activeTextEditor, pretty);
 
   });
 
   context.subscriptions.push(disposable);
+
+  let escapedDisposable = commands.registerCommand('extension.prettifyEscapedJSON', () => {
+	
+	const raw = getActiveEditorContents();
+
+	const cleanedRAW = removeEscapedChars(raw);
+
+	const json = jsonlint.parse(stripComments(cleanedRAW));
+
+	const pretty = JSON.stringify(json, null, DEFAULT_JSON_SPACE);
+	
+	replaceEditorContents(window.activeTextEditor, pretty);
+
+  });
+
+  context.subscriptions.push(escapedDisposable);
 }
