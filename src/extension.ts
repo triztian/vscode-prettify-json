@@ -9,7 +9,6 @@ import {
   commands
 } from 'vscode';
 
-import * as vscode from 'vscode';
 import * as jsonlint from 'jsonlint';
 
 const LINE_SEPERATOR = /\n|\r\n/;
@@ -60,7 +59,7 @@ export function activate(context: ExtensionContext) {
 
 		replaceEditorContents(window.activeTextEditor, pretty);
 	} catch (err) {
-		vscode.window.showErrorMessage(err.toLocaleString());
+		window.showErrorMessage(err.toLocaleString());
 	}
   }));
 
@@ -77,8 +76,7 @@ export function activate(context: ExtensionContext) {
 		replaceEditorContents(window.activeTextEditor, pretty);
 
 	} catch (err) {
-		vscode.window.showErrorMessage(err.toLocaleString());
+		window.showErrorMessage(err.toLocaleString());
 	}
   }));
-
 }
