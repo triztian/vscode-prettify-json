@@ -20,11 +20,7 @@ const DEFAULT_JSON_SPACE = 4;
 /**
  */
 function removeEscapedChars(rawJSON: string) {
-	return rawJSON.replace(/\\n/g, (match, offset, string) => {
-		return '';
-	}).replace(/\\"/g, (match, offset, string) => {
-		return '"';
-	});
+	return rawJSON.replace(/\\n/g, '').replace(/\\"/g, '"');
 }
 
 /**
@@ -40,9 +36,6 @@ function getActiveEditorContents(): string {
 }
 
 /**
- * 
- * @param editor 
- * @param contents 
  */
 function replaceEditorContents(editor, contents: string) {
 	editor.edit(builder => {
@@ -57,33 +50,35 @@ function replaceEditorContents(editor, contents: string) {
 }
 
 export function activate(context: ExtensionContext) {
-  let disposable = commands.registerCommand('extension.prettifyJSON', () => {
+  context.subscriptions.push(commands.registerCommand('extension.prettifyJSON', () => {
+	try {
+		const raw = getActiveEditorContents();
 
-	const raw = getActiveEditorContents();
+		const json = jsonlint.parse(stripComments(raw));
 
-    const json = jsonlint.parse(stripComments(raw));
+		const pretty = JSON.stringify(json, null, DEFAULT_JSON_SPACE);
 
-    const pretty = JSON.stringify(json, null, DEFAULT_JSON_SPACE);
+		replaceEditorContents(window.activeTextEditor, pretty);
+	} catch (err) {
+		vscode.window.showErrorMessage(err.toLocaleString());
+	}
+  }));
 
-	replaceEditorContents(window.activeTextEditor, pretty);
+  context.subscriptions.push(commands.registerCommand('extension.prettifyEscapedJSON', () => {
+	try {
+		const raw = getActiveEditorContents();
 
-  });
+		const cleanedRAW = removeEscapedChars(raw);
 
-  context.subscriptions.push(disposable);
+		const json = jsonlint.parse(stripComments(cleanedRAW));
 
-  let escapedDisposable = commands.registerCommand('extension.prettifyEscapedJSON', () => {
-	
-	const raw = getActiveEditorContents();
+		const pretty = JSON.stringify(json, null, DEFAULT_JSON_SPACE);
+		
+		replaceEditorContents(window.activeTextEditor, pretty);
 
-	const cleanedRAW = removeEscapedChars(raw);
+	} catch (err) {
+		vscode.window.showErrorMessage(err.toLocaleString());
+	}
+  }));
 
-	const json = jsonlint.parse(stripComments(cleanedRAW));
-
-	const pretty = JSON.stringify(json, null, DEFAULT_JSON_SPACE);
-	
-	replaceEditorContents(window.activeTextEditor, pretty);
-
-  });
-
-  context.subscriptions.push(escapedDisposable);
 }
